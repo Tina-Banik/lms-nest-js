@@ -1,0 +1,15 @@
+###
+POST http://localhost:3000/api/v1/auth/register
+Content-Type: application/json
+
+{
+    "fname":"Tina",
+    "lname":"Banik",
+    "email":"tina@gmail.com",
+    "password":"tina1234@",
+    "phone":"8777541744",
+    "address":"Saradapally",
+    "city":"Kolkata",
+    "state":"West Bengal",
+    "pincode":"700118"
+}
