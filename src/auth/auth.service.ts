@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from './dto/registerUser.dto';
+import bcrypt from "bcrypt";
 
 @Injectable()
 export class AuthService {
@@ -14,8 +15,13 @@ export class AuthService {
    */
   constructor(private readonly userService: UserService) {}
   
-  registerUser(registerDto:RegisterDto) {
+  async registerUser(registerDto:RegisterDto) {
     console.log("The register dto is =>",registerDto);
-    return this.userService.createUser();
+    
+    const slatRounds = 10;
+    const hash = await bcrypt.hash(registerDto.password, slatRounds);
+    console.log("The password is =>", hash);
+
+    return this.userService.createUser({...registerDto, password:hash});
   }
 }
