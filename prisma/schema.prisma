@@ -38,8 +38,77 @@ model User {
   lastLogin DateTime?
   lastLoginIP String?
 
+  userRoles UserRoleAssignment[]
+  
   createdAt DateTime @default(now())
-  updateAt DateTime @updateAt
+  updateAt DateTime @updatedAt
 
   @@map("users")
+}
+
+// ─────────────────────────────────────────
+// RBAC
+// ─────────────────────────────────────────
+model Role {
+  id String @id @default(uuid())
+
+  name String @unique
+  description String?
+
+  userRoles UserRoleAssignment[]
+  rolePermission RolePermissionAssignment[]
+
+  isSystem Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Permission {
+  id String @id @default(uuid())
+
+  name String @unique
+  module String
+  description String?
+
+  rolePermission RolePermissionAssignment[]
+
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("permissions")
+}
+
+model UserRoleAssignment {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+
+  roleId String
+  role Role @relation(fields:[roleId], references:[id], onDelete:Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId,roleId])
+
+  @@map("user_roles")
+}
+
+model RolePermissionAssignment {
+  id String @id @default(uuid())
+
+  roleId String
+  role Role @relation(fields:[roleId], references:[id], onDelete:Cascade)
+
+  permissionId String
+  permission Permission @relation(fields:[permissionId], references:[id], onDelete:Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleId,permissionId])
+
+  @@map("role_permission")
 }
