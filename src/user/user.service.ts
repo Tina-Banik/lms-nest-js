@@ -25,4 +25,41 @@ export class UserService {
     console.log('the register dto is =>', registerDto);
     return { message: 'User is created' };
   }
+
+  //session create
+  async sessionCreate(
+    id: string,
+    userId: string,
+    token: string,
+    userAgent?: string,
+    ipAddress?: string,
+    expiresAt?: Date,
+  ) {
+    const sessionToken = await this.prismaService.session.create({
+      data: {
+        id,
+        userId,
+        token,
+        userAgent,
+        ipAddress,
+        expiresAt: expiresAt!,
+      },
+    });
+
+    return sessionToken;
+  }
+
+  /*
+  Logout from a single device
+  Deletes a specific active session based on its unique token string
+  */
+  async deleteSingleDevice(
+    sessionId: string,
+    userId: string,
+    refreshToken: string,
+  ) {
+    return await this.prismaService.session.deleteMany({
+      where: { id: sessionId, userId, token: refreshToken },
+    });
+  }
 }

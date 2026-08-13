@@ -39,6 +39,7 @@ model User {
   lastLoginIP String?
 
   userRoles UserRoleAssignment[]
+  sessions Session[]
   
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
@@ -46,6 +47,25 @@ model User {
   @@map("users")
 }
 
+model Session {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+
+  token String @unique
+
+  userAgent String?
+  ipAddress String?
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+
+  @@map("sessions")
+
+}
 // ─────────────────────────────────────────
 // RBAC
 // ─────────────────────────────────────────

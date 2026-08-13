@@ -7,6 +7,8 @@ import { PinoLogger } from 'nestjs-pino';
 import { ErrorCode } from '../common/exceptions/err-codes';
 import { comparePassword } from '../shared/utils/password/password';
 import { JwtService } from '@nestjs/jwt';
+import { randomUUID } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +24,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly logger: PinoLogger,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async registerUser(registerDto: RegisterDto) {
@@ -35,7 +38,7 @@ export class AuthService {
   }
 
   //login
-  async loginUser(loginDto: LoginDto) {
+  async loginUser(loginDto: LoginDto, userAgent?: string, ipAddress?: string) {
     console.log('The login dto is =>', loginDto);
     this.logger.info('Login method is called');
     /**
@@ -80,20 +83,85 @@ export class AuthService {
     console.log('The payload =>', payload);
 
     const accessToken = await this.jwtService.signAsync(payload);
+    console.log('The access token =>', accessToken);
+
+    const sessionId = randomUUID();
+
+    const refreshTokenPayload = {
+      sub: user.id,
+      email: user.email,
+      jti: sessionId,
+    };
+
+    const refreshToken = await this.jwtService.signAsync(refreshTokenPayload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: '60s',
+    });
+    console.log('the refresh token are =>', refreshToken);
+
+    const sessionExpiry = new Date(Date.now() + 60 * 1000);
+
+    await this.userService.sessionCreate(
+      sessionId,
+      user.id,
+      refreshToken,
+      userAgent,
+      ipAddress,
+      sessionExpiry,
+    );
 
     return {
       accessToken,
-       user:{
+      refreshToken,
+      user: {
         id: user.id,
-        firstName:user.firstName,
-        lastName:user.lastName,
-        email:user.email,
-        phone:user.phone,
-        pincode:user.pincode,
-        state:user.state,
-        city:user.city,
-        roles
-       }
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        pincode: user.pincode,
+        state: user.state,
+        city: user.city,
+        roles,
+      },
+    };
+  }
+
+  //logout
+  async logout(refreshToken: string) {
+    console.log('The logout end point hits');
+    const refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+    console.log('The refresh secret=>', refreshSecret);
+
+    const payload = await this.jwtService.verifyAsync<{
+      sub: string;
+      email: string;
+      jti: string;
+    }>(refreshToken, { secret: refreshSecret });
+
+    if (!payload.sub || !payload.jti) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'Invalid refresh token',
+      });
     }
+
+    const result = await this.userService.deleteSingleDevice(
+      payload.jti,
+      payload.sub,
+      refreshToken,
+    );
+
+    if (result.count === 0) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'Session is already logged out',
+      });
+    }
+
+    return {
+      message: 'The user is logout successfully',
+    };
   }
 }

@@ -13,7 +13,7 @@ import { LoggerModule } from 'nestjs-pino';
     AuthModule,
     UserModule,
     PrismaModule,
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
     LoggerModule.forRoot({
       pinoHttp: {
         transport:
