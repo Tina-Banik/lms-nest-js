@@ -93,8 +93,11 @@ export class AuthService {
       jti: sessionId,
     };
 
+    const refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+
     const refreshToken = await this.jwtService.signAsync(refreshTokenPayload, {
-      secret: process.env.JWT_REFRESH_SECRET,
+      secret: refreshSecret,
       expiresIn: '60s',
     });
     console.log('the refresh token are =>', refreshToken);
@@ -130,15 +133,30 @@ export class AuthService {
   //logout
   async logout(refreshToken: string) {
     console.log('The logout end point hits');
+    this.logger.info('The logout method id called');
+
     const refreshSecret =
       this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
-    console.log('The refresh secret=>', refreshSecret);
+    // console.log('The refresh secret=>', refreshSecret);
 
-    const payload = await this.jwtService.verifyAsync<{
+    let payload: {
       sub: string;
       email: string;
       jti: string;
-    }>(refreshToken, { secret: refreshSecret });
+    };
+
+    try {
+      payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        email: string;
+        jti: string;
+      }>(refreshToken, { secret: refreshSecret, ignoreExpiration: true });
+    } catch (error) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'Invalid refresh token',
+      });
+    }
 
     if (!payload.sub || !payload.jti) {
       throw new UnauthorizedException({
@@ -150,7 +168,7 @@ export class AuthService {
     const result = await this.userService.deleteSingleDevice(
       payload.jti,
       payload.sub,
-      refreshToken,
+      // refreshToken,
     );
 
     if (result.count === 0) {

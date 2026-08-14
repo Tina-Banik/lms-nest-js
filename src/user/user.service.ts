@@ -56,10 +56,10 @@ export class UserService {
   async deleteSingleDevice(
     sessionId: string,
     userId: string,
-    refreshToken: string,
+    // refreshToken: string,
   ) {
     return await this.prismaService.session.deleteMany({
-      where: { id: sessionId, userId, token: refreshToken },
+      where: { id: sessionId, userId},
     });
   }
 }
