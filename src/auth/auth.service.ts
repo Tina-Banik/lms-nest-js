@@ -9,6 +9,7 @@ import { comparePassword } from '../shared/utils/password/password';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
+import { jwtConstant } from './constant';
 
 @Injectable()
 export class AuthService {
@@ -74,6 +75,9 @@ export class AuthService {
     const roles = user.userRoles.map((userRoles) => userRoles.role.name);
     console.log('The role name is =>', roles);
 
+    //----------------------------------
+    //1.Access token
+    //----------------------------------
     const payload = {
       sub: user.id,
       email: user.email,
@@ -82,11 +86,17 @@ export class AuthService {
 
     console.log('The payload =>', payload);
 
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      expiresIn: '1m',
+    });
     console.log('The access token =>', accessToken);
 
     const sessionId = randomUUID();
 
+    //----------------------------------
+    //2.refresh token
+    //---------------------------------
     const refreshTokenPayload = {
       sub: user.id,
       email: user.email,
@@ -98,7 +108,7 @@ export class AuthService {
 
     const refreshToken = await this.jwtService.signAsync(refreshTokenPayload, {
       secret: refreshSecret,
-      expiresIn: '60s',
+      expiresIn: '2m',
     });
     console.log('the refresh token are =>', refreshToken);
 
@@ -180,6 +190,95 @@ export class AuthService {
 
     return {
       message: 'The user is logout successfully',
+    };
+  }
+
+  //refresh access token
+  async refreshAccessToken(refreshToken: string) {
+    this.logger.info('the refresh access token is hit');
+
+    const refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'); //present on .env
+
+    let payload: {
+      sub: string;
+      email: string;
+      jti: string;
+    };
+
+    try {
+      payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: refreshSecret,
+      });
+    } catch (error) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'invalid or expired refresh token',
+      });
+    }
+
+    if (!payload.sub || !payload.email) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'invalid or expired refresh token',
+      });
+    }
+
+    //find the active session
+    const session = await this.userService.getSessionById(
+      payload.jti,
+      payload.sub,
+      refreshToken,
+    );
+
+    console.log("The active user's session =>", session);
+
+    if (!session) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'session is invalid or already logged out',
+      });
+    }
+
+    if (new Date() > session.expiresAt) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'session expired',
+      });
+    }
+    //get the user
+    const user = await this.userService.getUserById(payload.sub);
+    console.log('The existing user is =>', user);
+
+    if (!user) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'user npt found',
+      });
+    }
+
+    //get user's role
+    const userRoles = user.userRoles.map((userRole) => userRole.role.name);
+
+    const accessPayload = {
+      sub: user.id,
+      email: user.email,
+      userRoles,
+    };
+    console.log('the access pay load=>', accessPayload);
+
+    const accessToken = await this.jwtService.signAsync(accessPayload, {
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      // expiresIn: '1m',
+      expiresIn: this.configService.getOrThrow<string>(
+        'JWT_SECRET_EXPIRES',
+      ) as any,
+    });
+
+    console.log('the access token is =>', accessToken);
+
+    return {
+      accessToken,
     };
   }
 }

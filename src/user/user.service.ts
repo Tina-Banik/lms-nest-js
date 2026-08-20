@@ -59,7 +59,42 @@ export class UserService {
     // refreshToken: string,
   ) {
     return await this.prismaService.session.deleteMany({
-      where: { id: sessionId, userId},
+      where: { id: sessionId, userId },
+    });
+  }
+
+  /**get session by id */
+  async getSessionById(
+    sessionId: string, //jti
+    userId: string, //sub
+    refreshToken: string,
+  ) {
+    return await this.prismaService.session.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+        token: refreshToken,
+      },
+    });
+  }
+
+  /**get user by id */
+  async getUserById(userId: string) {
+    return await this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: {
+        id:true,
+        email:true,
+        userRoles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 }
