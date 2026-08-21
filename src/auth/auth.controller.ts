@@ -38,4 +38,6 @@ export class AuthController {
   refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshAccessToken(refreshTokenDto.refreshToken);
   }
+
+  //here request forgot password= /forgot-password
 }
