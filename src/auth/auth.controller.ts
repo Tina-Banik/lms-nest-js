@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/registerUser.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { PasswordRequestResetDto } from './dto/password-request-reset.dto';
 
 @Controller('/api/v1/auth')
 export class AuthController {
@@ -40,4 +41,6 @@ export class AuthController {
   }
 
   //here request forgot password= /forgot-password
+  @Post('forgot-password')
+  forgotPasswordRequest(@Body() forgotPasswordDto: PasswordRequestResetDto) {}
 }
