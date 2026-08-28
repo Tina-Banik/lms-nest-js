@@ -7,7 +7,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { ErrorCode } from '../common/exceptions/err-codes';
 import { comparePassword } from '../shared/utils/password/password';
 import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { jwtConstant } from './constant';
 
@@ -280,5 +280,30 @@ export class AuthService {
     return {
       accessToken,
     };
+  }
+
+  //request-password-reset
+  async requestPasswordReset(email: string) {
+    const user = await this.userService.getUserByEmail(email);
+
+    if (!user) {
+      //Do not reveal whether the email exists
+      throw new UnauthorizedException({
+        code: ErrorCode.CONFLICT_ERROR,
+        message:
+          'If an account exists with this email, a password request reset link has been sent',
+      });
+    }
+
+    //generate random token
+    const resetToken = randomBytes(32).toString('hex');
+
+    //hsh token before saving this
+    const tokenHash = createHash('sha256').update(resetToken).digest('hex');
+
+    //Token valid for 15 minutes
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    //remove the old password reset tokens
   }
 }
