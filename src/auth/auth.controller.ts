@@ -42,5 +42,11 @@ export class AuthController {
 
   //here request forgot password= /forgot-password
   @Post('forgot-password')
-  forgotPasswordRequest(@Body() forgotPasswordDto: PasswordRequestResetDto) {}
+  forgotPasswordRequest(
+    @Body() forgotPasswordRequestDto: PasswordRequestResetDto,
+  ) {
+    return this.authService.requestPasswordReset(
+      forgotPasswordRequestDto.email,
+    );
+  }
 }

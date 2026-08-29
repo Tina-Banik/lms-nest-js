@@ -21,9 +21,22 @@ export class UserService {
     return user;
   }
 
+  //create user
   createUser(registerDto: RegisterDto) {
     console.log('the register dto is =>', registerDto);
-    return { message: 'User is created' };
+    return this.prismaService.user.create({
+      data:{
+        firstName:registerDto.firstName,
+        lastName:registerDto.lastName,
+        email:registerDto.email,
+        phone:registerDto.phone,
+        password:registerDto.password,
+        address:registerDto.address,
+        city:registerDto.city,
+        state:registerDto.state,
+        pincode:registerDto.pincode
+      }
+    })
   }
 
   //session create
@@ -83,8 +96,8 @@ export class UserService {
     return await this.prismaService.user.findUnique({
       where: { id: userId },
       select: {
-        id:true,
-        email:true,
+        id: true,
+        email: true,
         userRoles: {
           select: {
             role: {
@@ -96,5 +109,23 @@ export class UserService {
         },
       },
     });
+  }
+
+  /**delete the old password reset token */
+  async deleteOldPasswordResetToken(userId: string) {
+    return await this.prismaService.passwordResetToken.deleteMany({
+      where: { id: userId },
+    });
+  }
+
+  /**create the saved password hash token */
+  async savedPasswordHashToken(userId:string, tokenHash:string, expiresAt:Date) {
+    return await this.prismaService.passwordResetToken.create({
+      data:{
+        userId,
+        tokenHash,
+        expiresAt
+      }
+    })
   }
 }

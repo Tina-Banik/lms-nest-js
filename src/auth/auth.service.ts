@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from './dto/registerUser.dto';
 import bcrypt from 'bcrypt';
@@ -31,11 +31,33 @@ export class AuthService {
   async registerUser(registerDto: RegisterDto) {
     console.log('The register dto is =>', registerDto);
 
+    const existsEmail = await this.userService.getUserByEmail(registerDto.email);
+    console.log("The exists email =>", existsEmail);
+
+    if(existsEmail) {
+      throw new UnauthorizedException({
+        code:ErrorCode.USER_ALREADY_EXISTS,
+        message:"This email is already exists"
+      })
+    }
+
     const slatRounds = 10;
     const hash = await bcrypt.hash(registerDto.password, slatRounds);
     console.log('The password is =>', hash);
 
-    return this.userService.createUser({ ...registerDto, password: hash });
+    const createUser = await this.userService.createUser({...registerDto,password:hash})
+    return {
+      user:{
+        firstName:createUser.firstName,
+        lastName:createUser.lastName,
+        email:createUser.email,
+        phone:createUser.phone,
+        address:createUser.address,
+        state:createUser.state,
+        city:createUser.city,
+        pincode:createUser.city,
+      }
+    }
   }
 
   //login
@@ -58,7 +80,7 @@ export class AuthService {
         message: 'Email and password are incorrect',
       });
     }
-
+    
     const matchedPassword = await comparePassword(
       loginDto.password,
       user.password,
@@ -288,7 +310,7 @@ export class AuthService {
 
     if (!user) {
       //Do not reveal whether the email exists
-      throw new UnauthorizedException({
+      throw new ConflictException({
         code: ErrorCode.CONFLICT_ERROR,
         message:
           'If an account exists with this email, a password request reset link has been sent',
@@ -298,12 +320,33 @@ export class AuthService {
     //generate random token
     const resetToken = randomBytes(32).toString('hex');
 
-    //hsh token before saving this
+    //hash token before saving this
     const tokenHash = createHash('sha256').update(resetToken).digest('hex');
 
     //Token valid for 15 minutes
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     //remove the old password reset tokens
+    const token = await this.userService.deleteOldPasswordResetToken(user.id);
+    console.log('The deleted token for password reset token =>', token);
+
+    //saved the hash token
+    const savedPasswordToken = await this.userService.savedPasswordHashToken(
+      user.id,
+      tokenHash,
+      expiresAt,
+    );
+
+    console.log('the saved password reset token =>', savedPasswordToken);
+
+    //send email here
+    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    console.log('the reset url is => ', resetUrl);
+
+    return {
+      success: true,
+      message:
+        'If an account exists with this email, a password reset has been sent',
+    };
   }
 }
