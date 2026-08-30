@@ -38,6 +38,10 @@ model User {
   lastLogin DateTime?
   lastLoginIP String?
 
+  isEmailVerified Boolean @default(false)
+  emailVerifyTokenHash String?
+  emailVerifyExpiresAt DateTime?
+
   userRoles UserRoleAssignment[]
   sessions Session[]
   passwordResetToken PasswordResetToken[]

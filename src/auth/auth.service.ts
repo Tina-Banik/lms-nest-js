@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from './dto/registerUser.dto';
 import bcrypt from 'bcrypt';
@@ -31,33 +35,38 @@ export class AuthService {
   async registerUser(registerDto: RegisterDto) {
     console.log('The register dto is =>', registerDto);
 
-    const existsEmail = await this.userService.getUserByEmail(registerDto.email);
-    console.log("The exists email =>", existsEmail);
+    const existsEmail = await this.userService.getUserByEmail(
+      registerDto.email,
+    );
+    console.log('The exists email =>', existsEmail);
 
-    if(existsEmail) {
+    if (existsEmail) {
       throw new UnauthorizedException({
-        code:ErrorCode.USER_ALREADY_EXISTS,
-        message:"This email is already exists"
-      })
+        code: ErrorCode.USER_ALREADY_EXISTS,
+        message: 'This email is already exists',
+      });
     }
 
     const slatRounds = 10;
     const hash = await bcrypt.hash(registerDto.password, slatRounds);
     console.log('The password is =>', hash);
 
-    const createUser = await this.userService.createUser({...registerDto,password:hash})
+    const createUser = await this.userService.createUser({
+      ...registerDto,
+      password: hash,
+    });
     return {
-      user:{
-        firstName:createUser.firstName,
-        lastName:createUser.lastName,
-        email:createUser.email,
-        phone:createUser.phone,
-        address:createUser.address,
-        state:createUser.state,
-        city:createUser.city,
-        pincode:createUser.city,
-      }
-    }
+      user: {
+        firstName: createUser.firstName,
+        lastName: createUser.lastName,
+        email: createUser.email,
+        phone: createUser.phone,
+        address: createUser.address,
+        state: createUser.state,
+        city: createUser.city,
+        pincode: createUser.city,
+      },
+    };
   }
 
   //login
@@ -78,6 +87,14 @@ export class AuthService {
       throw new UnauthorizedException({
         code: ErrorCode.UNAUTHORIZED,
         message: 'Email and password are incorrect',
+      });
+    }
+
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException({
+        code: ErrorCode.UNAUTHORIZED,
+        message:
+          'Email is not verified till now. After the email verification you can login',
       });
     }
     
