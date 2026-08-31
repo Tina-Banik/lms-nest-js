@@ -94,7 +94,7 @@ export class AuthService {
       throw new UnauthorizedException({
         code: ErrorCode.UNAUTHORIZED,
         message:
-          'Email is not verified till now. After the email verification you can login',
+          'Email is not verified till now. After the email verification you can login to the system',
       });
     }
     
