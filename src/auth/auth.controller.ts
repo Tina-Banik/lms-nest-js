@@ -6,6 +6,7 @@ import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { PasswordRequestResetDto } from './dto/password-request-reset.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { PasswordResetConfirmDto } from './dto/password-reset-conform.dto';
 
 @Controller('/api/v1/auth')
 export class AuthController {
@@ -56,4 +57,6 @@ export class AuthController {
   }
 
   //reset password confirm
+  @Post('reset-password-conform')
+  resetPasswordConfirm(@Body() resetPasswordConfirm: PasswordResetConfirmDto) {}
 }
