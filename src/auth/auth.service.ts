@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
@@ -14,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { jwtConstant } from './constant';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -30,8 +33,23 @@ export class AuthService {
     private readonly logger: PinoLogger,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
+  //here generate email verification token
+  private generateEmailVerificationToken() {
+    const rawToken = randomBytes(32).toString('hex');
+    console.log('the taw token =>', rawToken);
+
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+    return {
+      rawToken,
+      tokenHash,
+    };
+  }
+
+  //register the user
   async registerUser(registerDto: RegisterDto) {
     console.log('The register dto is =>', registerDto);
 
@@ -97,7 +115,7 @@ export class AuthService {
           'Email is not verified till now. After the email verification you can login to the system',
       });
     }
-    
+
     const matchedPassword = await comparePassword(
       loginDto.password,
       user.password,
@@ -364,6 +382,69 @@ export class AuthService {
       success: true,
       message:
         'If an account exists with this email, a password reset has been sent',
+    };
+  }
+
+  //verify email
+  async verifyEmail(token: string) {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const user =
+      await this.userService.findEmailVerificationTokenHash(tokenHash);
+    console.log('The existing user =>', user);
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    if (!user.emailVerifyExpiresAt || user.emailVerifyExpiresAt < new Date()) {
+      throw new BadRequestException(
+        'Verification token has expired. Please request a new verification email',
+      );
+    }
+
+    await this.userService.markEmailAsVerified(user.id);
+
+    return {
+      success: true,
+      message: 'Email is already verified',
+    };
+  }
+
+  //resend verify email
+  async resendVerifyEmail(email: string) {
+    const user = await this.userService.getUserByEmail(email);
+    console.log('The existing user =>', user);
+
+    if (!user) {
+      throw new NotFoundException(
+        'Unable to process the email verification request',
+      );
+    }
+
+    if (user.isEmailVerified) {
+      throw new ConflictException('Email is already verified');
+    }
+
+    const { rawToken, tokenHash } = this.generateEmailVerificationToken();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.userService.resendEmailVerificationToken(
+      user.id,
+      tokenHash,
+      expiresAt,
+    );
+
+    //send email verification
+    await this.mailService.sendVerificationEmail(user.email, rawToken);
+
+    return {
+      success: true,
+      message: 'Resend email verification is sent successfully',
     };
   }
 }

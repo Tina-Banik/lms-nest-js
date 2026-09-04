@@ -7,6 +7,8 @@ import { PrismaService } from './prisma/prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
+import { MailService } from './mail/mail.service';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -28,8 +30,9 @@ import { LoggerModule } from 'nestjs-pino';
             : undefined,
       },
     }),
+    MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, MailService],
 })
 export class AppModule {}

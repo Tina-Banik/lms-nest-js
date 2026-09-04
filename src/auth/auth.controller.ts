@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Request,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/registerUser.dto';
 import { LoginDto } from './dto/login.dto';
@@ -7,6 +15,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { PasswordRequestResetDto } from './dto/password-request-reset.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { PasswordResetConfirmDto } from './dto/password-reset-conform.dto';
+import { ResendVerifyEmailDto } from './dto/resend-email-verification.dto';
 
 @Controller('/api/v1/auth')
 export class AuthController {
@@ -44,7 +53,15 @@ export class AuthController {
 
   //verify email
   @Get('verify-email')
-  verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {}
+  verifyEmail(@Query() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto.token);
+  }
+
+  //resend-verify-email
+  @Post('resend-verify-email')
+  resendVerifyEmail(@Body() resendVerifyEmailDto: ResendVerifyEmailDto) {
+    return this.authService.resendVerifyEmail(resendVerifyEmailDto.email);
+  }
 
   //here request forgot password= /forgot-password
   @Post('forgot-password')

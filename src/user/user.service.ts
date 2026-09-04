@@ -25,18 +25,18 @@ export class UserService {
   createUser(registerDto: RegisterDto) {
     console.log('the register dto is =>', registerDto);
     return this.prismaService.user.create({
-      data:{
-        firstName:registerDto.firstName,
-        lastName:registerDto.lastName,
-        email:registerDto.email,
-        phone:registerDto.phone,
-        password:registerDto.password,
-        address:registerDto.address,
-        city:registerDto.city,
-        state:registerDto.state,
-        pincode:registerDto.pincode
-      }
-    })
+      data: {
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        email: registerDto.email,
+        phone: registerDto.phone,
+        password: registerDto.password,
+        address: registerDto.address,
+        city: registerDto.city,
+        state: registerDto.state,
+        pincode: registerDto.pincode,
+      },
+    });
   }
 
   //session create
@@ -119,12 +119,50 @@ export class UserService {
   }
 
   /**create the saved password hash token */
-  async savedPasswordHashToken(userId:string, tokenHash:string, expiresAt:Date) {
+  async savedPasswordHashToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
     return await this.prismaService.passwordResetToken.create({
-      data:{
+      data: {
         userId,
         tokenHash,
-        expiresAt
+        expiresAt,
+      },
+    });
+  }
+
+  /**find user by email verification token */
+  async findEmailVerificationTokenHash(tokenHash: string) {
+    return this.prismaService.user.findFirst({
+      where: {
+        emailVerifyTokenHash: tokenHash,
+      },
+    });
+  }
+  
+  async markEmailAsVerified(userId:string) {
+    return this.prismaService.user.update({
+      where:{
+        id:userId
+      },
+      data:{
+        isEmailVerified:true,
+        emailVerifyExpiresAt:null,
+        emailVerifyTokenHash:null
+      }
+    });
+  }
+
+  async resendEmailVerificationToken(userId:string, tokenHash:string,expiresAt:Date) {
+    return await this.prismaService.user.update({
+      where:{
+        id:userId
+      },
+      data:{
+        emailVerifyTokenHash:tokenHash,
+        emailVerifyExpiresAt:expiresAt
       }
     })
   }
