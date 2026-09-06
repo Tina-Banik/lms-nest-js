@@ -135,35 +135,59 @@ export class UserService {
 
   /**find user by email verification token */
   async findEmailVerificationTokenHash(tokenHash: string) {
-    return this.prismaService.user.findFirst({
+    return this.prismaService.verificationToken.findFirst({
       where: {
-        emailVerifyTokenHash: tokenHash,
+        tokenHash,
       },
-    });
-  }
-  
-  async markEmailAsVerified(userId:string) {
-    return this.prismaService.user.update({
-      where:{
-        id:userId
+      include: {
+        user: true,
       },
-      data:{
-        isEmailVerified:true,
-        emailVerifyExpiresAt:null,
-        emailVerifyTokenHash:null
-      }
     });
   }
 
-  async resendEmailVerificationToken(userId:string, tokenHash:string,expiresAt:Date) {
-    return await this.prismaService.user.update({
-      where:{
-        id:userId
+  async markEmailAsVerified(userId: string) {
+    return this.prismaService.user.update({
+      where: {
+        id: userId,
       },
-      data:{
-        emailVerifyTokenHash:tokenHash,
-        emailVerifyExpiresAt:expiresAt
-      }
-    })
+      data: {
+        isEmailVerified: true,
+        emailVerifyExpiresAt: null,
+        emailVerifyTokenHash: null,
+      },
+    });
+  }
+
+  //remove previous verification token id
+  async deleteEmailVerification(id: string) {
+    return this.prismaService.verificationToken.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  //remove previous verification tokens
+  async deletePreviousEmailVerificationToken(userId: string) {
+    return await this.prismaService.verificationToken.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  }
+
+  //create the new email verification token
+  async resendEmailVerificationToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
+    return await this.prismaService.verificationToken.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt,
+      },
+    });
   }
 }

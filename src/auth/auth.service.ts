@@ -389,15 +389,17 @@ export class AuthService {
   async verifyEmail(token: string) {
     const tokenHash = createHash('sha256').update(token).digest('hex');
 
-    const user =
+    const verificationToken =
       await this.userService.findEmailVerificationTokenHash(tokenHash);
-    console.log('The existing user =>', user);
+    console.log('The existing user =>', verificationToken);
 
-    if (!user) {
+    if (!verificationToken) {
       throw new BadRequestException('Invalid or expired verification token');
     }
 
-    if (user.isEmailVerified) {
+    const user = verificationToken.user;
+
+    if (!user || user.isEmailVerified) {
       throw new BadRequestException('Email is already verified');
     }
 
@@ -408,6 +410,7 @@ export class AuthService {
     }
 
     await this.userService.markEmailAsVerified(user.id);
+    await this.userService.deleteEmailVerification(verificationToken.id);
 
     return {
       success: true,
@@ -433,6 +436,10 @@ export class AuthService {
     const { rawToken, tokenHash } = this.generateEmailVerificationToken();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
+    //delete the verification token
+    await this.userService.deletePreviousEmailVerificationToken(user.id);
+
+    //create verification token
     await this.userService.resendEmailVerificationToken(
       user.id,
       tokenHash,
