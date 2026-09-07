@@ -74,6 +74,6 @@ export class AuthController {
   }
 
   //reset password confirm
-  @Post('reset-password-conform')
+  @Post('reset-password-confirm')
   resetPasswordConfirm(@Body() resetPasswordConfirm: PasswordResetConfirmDto) {}
 }
