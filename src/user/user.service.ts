@@ -190,4 +190,16 @@ export class UserService {
       },
     });
   }
+
+  //find password token hash
+  async findPasswordTokenHash(tokenHash: string) {
+    return await this.prismaService.passwordResetToken.findUnique({
+      where: {
+        tokenHash,
+      },
+      include: {
+        user: true,
+      },
+    });
+  }
 }
