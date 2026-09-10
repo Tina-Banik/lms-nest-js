@@ -192,13 +192,25 @@ export class UserService {
   }
 
   //find password token hash
-  async findPasswordTokenHash(tokenHash: string) {
+  async findPassword(tokenHash: string) {
     return await this.prismaService.passwordResetToken.findUnique({
       where: {
         tokenHash,
       },
       include: {
         user: true,
+      },
+    });
+  }
+
+  //update the password
+  async updatePassword(userId: string, password: string) {
+    return await this.prismaService.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password,
       },
     });
   }
