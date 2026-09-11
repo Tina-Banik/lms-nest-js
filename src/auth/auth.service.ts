@@ -11,7 +11,10 @@ import bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { PinoLogger } from 'nestjs-pino';
 import { ErrorCode } from '../common/exceptions/err-codes';
-import { comparePassword } from '../shared/utils/password/password';
+import {
+  comparePassword,
+  hashPassword,
+} from '../shared/utils/password/password';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
@@ -399,11 +402,15 @@ export class AuthService {
 
     const user = verificationToken.user;
 
-    if (!user || user.isEmailVerified) {
+    if (!user) {
+      throw new BadRequestException('Invalid verification token');
+    }
+
+    if (user.isEmailVerified) {
       throw new BadRequestException('Email is already verified');
     }
 
-    if (!user.emailVerifyExpiresAt || user.emailVerifyExpiresAt < new Date()) {
+    if (verificationToken.expiresAt< new Date()) {
       throw new BadRequestException(
         'Verification token has expired. Please request a new verification email',
       );
@@ -452,6 +459,36 @@ export class AuthService {
     return {
       success: true,
       message: 'Resend email verification is sent successfully',
+    };
+  }
+
+  //confirm reset password
+  async confirmPasswordReset(token: string, newPassword: string) {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const resetToken = await this.userService.findPasswordToken(tokenHash);
+
+    if (!resetToken) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    if (resetToken.expiresAt < new Date()) {
+      await this.userService.deletePasswordResetToken(resetToken.id);
+
+      throw new BadRequestException('Password reset token has expired');
+    }
+
+    //hash new password
+    const hashedPassword = await hashPassword(newPassword);
+
+    //update password
+    await this.userService.updatePassword(resetToken.userId, hashedPassword);
+
+    //delete token that it can not be reused
+    await this.userService.deleteOldPasswordResetToken(resetToken.id);
+
+    return {
+      message: 'Password reset successfully',
     };
   }
 }

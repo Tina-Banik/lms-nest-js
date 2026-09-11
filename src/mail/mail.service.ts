@@ -25,7 +25,8 @@ export class MailService {
                 <h2>Verify Your Email</h2>
                 <p>Thank ypu for registering with our LMS</p>
                 <p>Please click the button below to verify the email address</p>
-                <a href-${verificationEmailUrl}>Verify Your Email</a>
+                <a href="${verificationEmailUrl}" style="display: inline-block;padding: 12px 20px;background-color: #007bff;
+                color: #ffffff;text-decoration: none;border-radius: 5px;">Verify Your Email</a>
                 <p>This email verification link will expire in 15 minutes</p>
             `,
     });

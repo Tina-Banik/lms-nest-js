@@ -192,7 +192,7 @@ export class UserService {
   }
 
   //find password token hash
-  async findPassword(tokenHash: string) {
+  async findPasswordToken(tokenHash: string) {
     return await this.prismaService.passwordResetToken.findUnique({
       where: {
         tokenHash,
@@ -212,6 +212,13 @@ export class UserService {
       data: {
         password,
       },
+    });
+  }
+
+  //delete password reset token
+  async deletePasswordResetToken(id: string) {
+    return await this.prismaService.passwordResetToken.delete({
+      where: { id },
     });
   }
 }
