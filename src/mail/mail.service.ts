@@ -31,4 +31,32 @@ export class MailService {
             `,
     });
   }
+
+  /**send password reset email */
+  async sendPasswordResetEmail(email: string, resetToken: string) {
+    const resetPasswordUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    console.log('The password reset url is =>', resetPasswordUrl);
+
+    await this.transporter.sendMail({
+      from: process.env.SMTP_EMAIL_FROM,
+      to: email,
+      subject: 'Reset your LMS password',
+      html: `
+        <h2>Password request reset token</h2>
+        <p>We received a request to reset your LMS password</p>
+        <p>Click the button below to create a new password</p>
+        <a href="${resetPasswordUrl}" style="
+          display: inline-block;
+          padding: 12px 20px;
+          background-color: #007bff;
+          color: #ffffff;
+          text-decoration: none;
+          border-radius: 5px;
+        ">Reset Password</a>
+
+        <p>The password reset link will expire in 15 minutes</p>
+        <p>If you did a request a password reset, you can safely ignore this email</p>
+      `,
+    });
+  }
 }

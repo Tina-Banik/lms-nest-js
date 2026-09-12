@@ -378,8 +378,10 @@ export class AuthService {
     console.log('the saved password reset token =>', savedPasswordToken);
 
     //send email here
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
-    console.log('the reset url is => ', resetUrl);
+    // const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`;
+    // console.log('the reset url is => ', resetUrl);
+
+    await this.mailService.sendPasswordResetEmail(user.email, resetToken);
 
     return {
       success: true,
@@ -410,7 +412,7 @@ export class AuthService {
       throw new BadRequestException('Email is already verified');
     }
 
-    if (verificationToken.expiresAt< new Date()) {
+    if (verificationToken.expiresAt < new Date()) {
       throw new BadRequestException(
         'Verification token has expired. Please request a new verification email',
       );
