@@ -42,6 +42,9 @@ model User {
   emailVerifyTokenHash String?
   emailVerifyExpiresAt DateTime?
 
+  instituteId String?
+  institute Institute? @relation(fields:[instituteId], references:[id], onDelete:SetNull)
+
   userRoles UserRoleAssignment[]
   sessions Session[]
   passwordResetToken PasswordResetToken[]
@@ -50,6 +53,8 @@ model User {
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
 
+  @@index([instituteId])
+  
   @@map("users")
 }
 
@@ -170,4 +175,46 @@ model RolePermissionAssignment {
   @@unique([roleId,permissionId])
 
   @@map("role_permission")
+}
+
+// ─────────────────────────────────────────
+// Institute Model
+// ─────────────────────────────────────────
+enum InstituteType {
+  COACHING_CENTER
+  EDUCATIONAL_INSTITUTE
+  CORPORATE_TRAINING
+  INDIVIDUAL_TUTOR
+}
+
+enum InstituteStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+model Institute {
+  id String @id @default(uuid())
+
+  name String @unique
+
+  instituteType InstituteType
+
+  address String?
+  city String?
+  state String?
+  pincode String?
+
+  status InstituteStatus @default(PENDING)
+
+  isApproved Boolean @default(false)
+  isPublished Boolean @default(false)
+
+  user User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("institutes")
 }

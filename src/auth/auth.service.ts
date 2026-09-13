@@ -21,6 +21,10 @@ import { ConfigService } from '@nestjs/config';
 import { jwtConstant } from './constant';
 import { MailService } from '../mail/mail.service';
 
+export class CreateUserDto extends RegisterDto {
+  instituteId!:string;
+}
+
 @Injectable()
 export class AuthService {
   //logic for register user
@@ -68,14 +72,47 @@ export class AuthService {
       });
     }
 
+    const existsPhone = await this.userService.getUserByPhone(
+      registerDto.phone,
+    );
+    console.log('the exists phone =>', existsPhone);
+
+    if (existsPhone) {
+      throw new UnauthorizedException({
+        code: ErrorCode.USER_ALREADY_EXISTS,
+        message: 'This phone is already exists',
+      });
+    }
+
+    if (registerDto.password !== registerDto.confirmPassword) {
+      throw new BadRequestException({
+        code: ErrorCode.BAD_REQUEST_EXCEPTION,
+        message: 'Password do not match',
+      });
+    }
+
+    if (!registerDto.acceptPrivacyPolicy || !registerDto.acceptTerms) {
+      throw new BadRequestException({
+        code: ErrorCode.BAD_REQUEST_EXCEPTION,
+        message: 'Terms and privacy policy must be accepted',
+      });
+    }
+
     const slatRounds = 10;
     const hash = await bcrypt.hash(registerDto.password, slatRounds);
     console.log('The password is =>', hash);
 
+    //1.institute create
+    const institute = await this.userService.createInstitute({
+      ...registerDto,
+    });
+    //2. create user
     const createUser = await this.userService.createUser({
       ...registerDto,
       password: hash,
+      
     });
+
     return {
       user: {
         firstName: createUser.firstName,

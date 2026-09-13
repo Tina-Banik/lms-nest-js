@@ -21,6 +21,44 @@ export class UserService {
     return user;
   }
 
+  //get user by phone
+  async getUserByPhone(phone: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        phone,
+      },
+      include: {
+        userRoles: {
+          select: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    console.log("the user's phone number =>", user);
+    return user;
+  }
+
+  //create institute
+  async createInstitute(registerDto: RegisterDto) {
+    const institute = await this.prismaService.institute.create({
+      data: {
+        name: registerDto.instituteName,
+        instituteType: registerDto.instituteType,
+
+        address: registerDto.address,
+        city: registerDto.city,
+        state: registerDto.state,
+        pincode: registerDto.pincode,
+
+        status: 'PENDING',
+      },
+    });
+    console.log('the institute =>', institute);
+    return institute;
+  }
+
   //create user
   createUser(registerDto: RegisterDto) {
     console.log('the register dto is =>', registerDto);
