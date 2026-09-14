@@ -60,9 +60,9 @@ export class UserService {
   }
 
   //create user
-  createUser(registerDto: RegisterDto) {
+  async createUser(registerDto: RegisterDto, instituteId: string) {
     console.log('the register dto is =>', registerDto);
-    return this.prismaService.user.create({
+    return await this.prismaService.user.create({
       data: {
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
@@ -73,6 +73,11 @@ export class UserService {
         city: registerDto.city,
         state: registerDto.state,
         pincode: registerDto.pincode,
+        institute: {
+          connect: {
+            id: instituteId,
+          },
+        },
       },
     });
   }
@@ -257,6 +262,25 @@ export class UserService {
   async deletePasswordResetToken(id: string) {
     return await this.prismaService.passwordResetToken.delete({
       where: { id },
+    });
+  }
+
+  //find ADMIN role
+  async findAdminRole() {
+    return await this.prismaService.role.findUnique({
+      where: {
+        name: 'ADMIN',
+      },
+    });
+  }
+
+  //assign admin role
+  async assignAdminRole(userId: string, roleId: string) {
+    return await this.prismaService.userRoleAssignment.create({
+      data: {
+        userId,
+        roleId,
+      },
     });
   }
 }

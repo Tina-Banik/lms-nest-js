@@ -22,7 +22,7 @@ import { jwtConstant } from './constant';
 import { MailService } from '../mail/mail.service';
 
 export class CreateUserDto extends RegisterDto {
-  instituteId!:string;
+  instituteId!: string;
 }
 
 @Injectable()
@@ -107,11 +107,30 @@ export class AuthService {
       ...registerDto,
     });
     //2. create user
-    const createUser = await this.userService.createUser({
-      ...registerDto,
-      password: hash,
-      
-    });
+    const createUser = await this.userService.createUser(
+      {
+        ...registerDto,
+        password: hash,
+      },
+      institute.id,
+    );
+
+    //find admin role
+    const adminRole = await this.userService.findAdminRole();
+    console.log('the admin role is =>', adminRole);
+
+    if (!adminRole) {
+      throw new NotFoundException({
+        code: ErrorCode.USER_NOT_FOUND,
+        message: 'Admin role not found',
+      });
+    }
+
+    //assign the admin role only
+    const assignAdmin = await this.userService.assignAdminRole(
+      createUser.id,
+      adminRole.id,
+    );
 
     return {
       user: {
@@ -124,6 +143,12 @@ export class AuthService {
         city: createUser.city,
         pincode: createUser.city,
       },
+      institute :{
+        id:institute.id,
+        name:institute.name,
+        type:institute.instituteType,
+        status:institute.status
+      }
     };
   }
 
