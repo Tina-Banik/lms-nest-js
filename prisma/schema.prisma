@@ -50,6 +50,8 @@ model User {
   passwordResetToken PasswordResetToken[]
   verificationTokens VerificationToken[]
 
+  KycDocuments KycDocument[]
+
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
 
@@ -212,9 +214,60 @@ model Institute {
   isPublished Boolean @default(false)
 
   user User[]
+  KycDocuments KycDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("institutes")
+}
+
+// ─────────────────────────────────────────
+// KYC Model
+// ─────────────────────────────────────────
+enum KycDocumentType {
+  INSTITUTE_REGISTRATION_CERTIFICATE
+  GET_REGISTRATION_CERTIFICATE
+  ADMIN_GOVERNMENT_ID
+  ADMIN_PHOTOGRAPH
+  INSTITUTE_ESTABLISHMENT_PROOF
+  EDUCATIONAL_PROOF
+  ADDRESS_PROOF
+}
+
+enum KycDocumentStatus {
+  PENDING
+  UNDER_VIEW
+  APPROVED
+  REJECTED
+}
+
+model KycDocument {
+  id String @id @default(uuid())
+
+  instituteId String
+  institute Institute @relation(fields:[instituteId], references:[id], onDelete:Cascade)
+
+  uploadedById String
+  uploadedBy User @relation(fields:[uploadedById], references:[id])
+
+  documentType KycDocumentType
+
+  fileName String
+  fileUrl String
+  fileType String
+  
+  status KycDocumentStatus @default(PENDING)
+
+  rejectionReason String?
+
+  reviewedById String?
+  reviewAt DateTime?
+
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@index([instituteId])
+  @@index([status])
+  @@map("kyc_documents")
 }
