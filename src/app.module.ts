@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
+import { KycModule } from './kyc/kyc.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MailModule } from './mail/mail.module';
       },
     }),
     MailModule,
+    KycModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, MailService],
