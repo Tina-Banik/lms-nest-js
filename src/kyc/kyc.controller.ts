@@ -13,16 +13,18 @@ import {
 import { KycService } from './kyc.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadKycDocumentDto } from './dto/upload-kyc-document.dto';
-import {memoryStorage} from "multer";
+import { memoryStorage } from 'multer';
 
 @Controller('/api/v1/kyc')
 export class KycController {
   constructor(private readonly kycService: KycService) {}
-    
+
   @Post('documents')
-  @UseInterceptors(FileInterceptor('file',{
-    storage:memoryStorage()
-  }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+    }),
+  )
   uploadDocument(
     @Body() uploadKycDocumentDto: UploadKycDocumentDto,
 
@@ -51,5 +53,10 @@ export class KycController {
     }
 
     //here write the service
+    return this.kycService.uploadDocument(
+      userId,
+      uploadKycDocumentDto.documentType,
+      file,
+    );
   }
 }
