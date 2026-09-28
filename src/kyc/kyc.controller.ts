@@ -19,6 +19,7 @@ import { memoryStorage } from 'multer';
 export class KycController {
   constructor(private readonly kycService: KycService) {}
 
+  /**here the admin upload the document */
   @Post('documents')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -33,7 +34,7 @@ export class KycController {
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
           new FileTypeValidator({
-            fileType: /(pdf|jpeg|jpg|png)$i/,
+            fileType: /(pdf|jpeg|jpg)$i/,
           }),
         ],
       }),
