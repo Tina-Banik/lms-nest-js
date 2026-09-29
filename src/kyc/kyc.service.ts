@@ -60,11 +60,12 @@ export class KycService {
         uploadedById: userId,
         documentType,
         fileName: file.originalname,
-        fileUrl: `/uploads/kyc/${fileName}`,
+        fileUrl: `/public/uploads/kyc/${fileName}`,
         fileType: file.mimetype,
         status: 'PENDING',
       },
     });
+    console.log("The kyc document =>", kycDocument);
 
     return {
         message:"KYC document uploaded successfully",
