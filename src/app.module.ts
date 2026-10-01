@@ -10,6 +10,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
 import { KycModule } from './kyc/kyc.module';
+import { SystemAdminModule } from './system-admin/system-admin.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { KycModule } from './kyc/kyc.module';
     }),
     MailModule,
     KycModule,
+    SystemAdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, MailService],
