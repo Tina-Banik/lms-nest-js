@@ -8,12 +8,14 @@ import {
   Post,
   Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { KycService } from './kyc.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadKycDocumentDto } from './dto/upload-kyc-document.dto';
 import { memoryStorage } from 'multer';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 
 @Controller('/api/v1/kyc')
 export class KycController {
@@ -21,6 +23,7 @@ export class KycController {
 
   /**here the admin upload the document */
   @Post('documents')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -34,7 +37,7 @@ export class KycController {
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
           new FileTypeValidator({
-            fileType: /(pdf|jpeg|jpg)$i/,
+            fileType:/^(application\/pdf|image\/jpeg|image\/png)$/i,
           }),
         ],
       }),
@@ -46,6 +49,8 @@ export class KycController {
       throw new BadRequestException('File is required');
     }
 
+    console.log("The request.user =>", request.user);
+    
     const userId = request.user?.id;
     console.log('The user-id =>', userId);
 
