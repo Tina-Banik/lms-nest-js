@@ -1,5 +1,5 @@
 import {
-    BadRequestException,
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -15,13 +15,13 @@ export class SystemAdminService {
   //write the business logic
   async reviewKycDocument(
     documentId: string,
-    systemAdminId: true,
+    systemAdminId: string,
     reviewKycDto: ReviewKycDto,
   ) {
     console.log('the document id =>', documentId);
     console.log('the system admin id =>', systemAdminId);
 
-    //f1.find the docuemnt
+    //f1.find the document
     const document = await this.prismaService.kycDocument.findUnique({
       where: {
         id: documentId,
@@ -42,8 +42,36 @@ export class SystemAdminService {
       throw new ConflictException('KYC document is already rejected');
     }
 
-    if(reviewKycDto.status === KycDocumentStatus.REJECTED && !reviewKycDto.rejectionReason) {
-        throw new BadRequestException('Rejection reason is required when rejecting the KYC')
+    if (
+      reviewKycDto.status === KycDocumentStatus.REJECTED &&
+      !reviewKycDto.rejectionReason
+    ) {
+      throw new BadRequestException(
+        'Rejection reason is required when rejecting the KYC',
+      );
     }
+
+    const updatedDocument = await this.prismaService.kycDocument.update({
+      where: {
+        id: documentId,
+      },
+      data: {
+        status: reviewKycDto.status,
+        rejectionReason:
+          reviewKycDto.status === KycDocumentStatus.REJECTED
+            ? reviewKycDto.rejectionReason
+            : null,
+        reviewedById: systemAdminId,
+        reviewAt: new Date(),
+      },
+    });
+
+    return {
+      data: updatedDocument,
+      message:
+        reviewKycDto.status === KycDocumentStatus.APPROVED
+          ? 'KYC Document is approved successfully'
+          : 'KYC document is rejected successfully',
+    };
   }
 }

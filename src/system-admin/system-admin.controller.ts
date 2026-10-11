@@ -11,10 +11,16 @@ export class SystemAdminController {
 
   @Patch('/kyc/:documentId/review')
   reviewKyc(
-    @Param('documentId') documentId:string,
-    @Body() reviewKycDto:ReviewKycDto,
-    @Req() request:any,
+    @Param('documentId') documentId: string,
+    @Body() reviewKycDto: ReviewKycDto,
+    @Req() request: any,
   ) {
     //here I call the service
+    console.log('The req.user.sub system-admin :', request.user.sub);
+    return this.systemAdminService.reviewKycDocument(
+      documentId,
+      request.user.sub,
+      reviewKycDto,
+    );
   }
 }
