@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma/prisma.service';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { KycDocumentStatus } from '@prisma/client';
+import { RejectKycDto } from './dto/reject-kyc.dto';
 
 @Injectable()
 export class SystemAdminService {
@@ -74,6 +75,14 @@ export class SystemAdminService {
   //         : 'KYC document is rejected successfully',
   //   };
   // }
+
+  private ensureUnderReview(documents: { status: KycDocumentStatus }[]) {
+    if (documents.some((doc) => doc.status !== KycDocumentStatus.UNDER_VIEW)) {
+      throw new BadRequestException(
+        'All KYC documents must be under review before this action',
+      );
+    }
+  }
 
   //1.find the institute submission using one of its document Ids
   private async getSubmission(kycId: string) {
@@ -165,5 +174,92 @@ export class SystemAdminService {
       status: KycDocumentStatus.UNDER_VIEW,
       res,
     };
+  }
+
+  //3.approved the kyc
+  async approveKyc(kycId: string, systemAdminId: string) {
+    console.log('the kyc id =>', kycId);
+    console.log('the system admin id =>', systemAdminId);
+
+    const { instituteId, documents } = await this.getSubmission(kycId);
+    console.log('the institute-id=>', instituteId);
+    console.log('the documents=>', documents);
+
+    this.ensureUnderReview(documents);
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.kycDocument.updateMany({
+        where: { instituteId },
+        data: {
+          status: KycDocumentStatus.APPROVED,
+          reviewedById: systemAdminId,
+          reviewAt: new Date(),
+          rejectionReason: null,
+          //later add the review not
+        },
+      });
+
+      //mark the institute as approved as well
+      await tx.institute.update({
+        where: {
+          id: instituteId,
+        },
+        data: {
+          status: 'APPROVED',
+          isApproved: true,
+        },
+      });
+    });
+
+    return {
+      message: 'KYC submission is approved successfully',
+      instituteId,
+      status: KycDocumentStatus.APPROVED,
+    };
+  }
+
+  //4.reject the kyc
+  async rejectKyc(kycId: string, systemAdminId: string, dto: RejectKycDto) {
+    console.log('The kyc id =>', kycId);
+    console.log('The system-admin id =>', systemAdminId);
+
+    const { instituteId, documents } = await this.getSubmission(kycId);
+    console.log('the institute id =>', instituteId);
+    console.log('the documents =>', documents);
+
+    this.ensureUnderReview(documents);
+
+    await this.prismaService.$transaction(async (tx) => {
+      await this.prismaService.kycDocument.updateMany({
+        where: {
+          id: kycId,
+        },
+        data: {
+          status: KycDocumentStatus.REJECTED,
+          rejectionReason: dto.rejectionReason,
+          reviewAt: new Date(),
+          reviewedById: systemAdminId,
+          //later I will add the reviewNote
+        },
+      });
+
+      await this.prismaService.institute.updateMany({
+        where: {
+          id: instituteId,
+        },
+        data: {
+          status: 'REJECTED',
+          isApproved: false,
+          isPublished: false,
+        },
+      });
+
+      return {
+        message: 'KYC is rejected successfully',
+        instituteId,
+        rejectionReason: dto.rejectionReason,
+        status: KycDocumentStatus.REJECTED,
+      };
+    });
   }
 }

@@ -51,4 +51,18 @@ export class SystemAdminController {
 
     return this.systemAdminService.startReview(kycId, request.user.sub);
   }
+
+  //approve kyc
+  @Post('/:kycId/approve')
+  approveKyc(
+    @Param('kycId') kycId: string,
+    @Req() request: AuthenticationRequest,
+  ) {
+    //here import the service code
+    console.log('the kyc id =>', kycId);
+    console.log('the request user sub=>', request.user.sub);
+    console.log('the request user roles=>', request.user.roles);
+
+    return this.systemAdminService.approveKyc(kycId, request.user.sub);
+  }
 }
