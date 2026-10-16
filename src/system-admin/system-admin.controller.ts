@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { SystemAdminGuard } from './guards/system-admin/system-admin.guard';
 import { SystemAdminService } from './system-admin.service';
 import { ReviewKycDto } from './dto/review-kyc.dto';
+import { RejectKycDto } from './dto/reject-kyc.dto';
 
 export interface AuthenticationRequest extends Request {
   user: {
@@ -64,5 +65,20 @@ export class SystemAdminController {
     console.log('the request user roles=>', request.user.roles);
 
     return this.systemAdminService.approveKyc(kycId, request.user.sub);
+  }
+
+  //reject kyc
+  @Post('/:kycId/reject')
+  rejectKyc(
+    @Param('kycId') kycId: string,
+    @Body() dto: RejectKycDto,
+    @Req() request: AuthenticationRequest,
+  ) {
+    //here add the service code
+    console.log('the kyc id =>', kycId);
+    console.log('the req.user =>', request.user.sub);
+    console.log('the request user roles:', request.user.roles);
+
+    return this.systemAdminService.rejectKyc(kycId, request.user.sub, dto);
   }
 }
