@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma/prisma.service';
 import { ReviewKycDto } from './dto/review-kyc.dto';
 import { KycDocumentStatus } from '@prisma/client';
 import { RejectKycDto } from './dto/reject-kyc.dto';
+import { RequestKycInfo } from './dto/request-kyc-info.dto';
 
 @Injectable()
 export class SystemAdminService {
@@ -261,5 +262,36 @@ export class SystemAdminService {
         status: KycDocumentStatus.REJECTED,
       };
     });
+  }
+
+  //5.ask the applicant for missing information
+  async requestInfo(kycId: string, systemAdminId: string, dto: RequestKycInfo) {
+    console.log('the kyc id =>', kycId);
+    console.log('The system admin id =>', systemAdminId);
+
+    const { instituteId, documents } = await this.getSubmission(kycId);
+    console.log('the institute id =>', instituteId);
+    console.log('the kyc documents =>', documents);
+
+    this.ensureUnderReview(documents);
+
+    await this.prismaService.kycDocument.updateMany({
+      where: {
+        instituteId,
+      },
+      data: {
+        status: KycDocumentStatus.APPROVED, //will add NEEDS_INFORMATION
+        reviewedById: systemAdminId,
+        reviewAt: new Date(),
+        rejectionReason: dto.reason,
+      },
+    });
+
+    return {
+      message: 'Additional KYC information requested',
+      instituteId,
+      systemAdminId,
+      reason: dto.reason,
+    };
   }
 }
