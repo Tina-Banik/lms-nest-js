@@ -294,4 +294,57 @@ export class SystemAdminService {
       reason: dto.reason,
     };
   }
+
+  //6.Suspend the associated institute
+  async suspendKyc(kycId: string, systemAdminId: string) {
+    console.log('the kyc id =>', kycId);
+    console.log('the system admin id =>', systemAdminId);
+
+    const { instituteId, documents } = await this.getSubmission(kycId);
+    console.log('the institute-id => ', instituteId);
+    console.log('the user documents=>', documents);
+
+    this.ensureUnderReview(documents);
+
+    const institute = await this.prismaService.institute.findUnique({
+      where: { id: instituteId },
+    });
+
+    if (!institute) {
+      throw new NotFoundException('Institute not found');
+    }
+
+    if (institute.status !== 'APPROVED') {
+      throw new BadRequestException(
+        'Only an approved institute can be suspended',
+      );
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.kycDocument.updateMany({
+        where: { instituteId },
+        data: {
+          status: KycDocumentStatus.REJECTED,
+          reviewedById: systemAdminId,
+          reviewAt: new Date(),
+        },
+      });
+
+      await tx.institute.update({
+        where: { id: instituteId },
+        data: {
+          status: 'REJECTED',
+          isApproved: false,
+          isPublished: false,
+        },
+      });
+    });
+
+    return {
+      message: 'Institute and kyc suspend successfully',
+      instituteId,
+      status: 'SUSPENDED',
+      performedBy: systemAdminId,
+    };
+  }
 }
