@@ -81,4 +81,30 @@ export class SystemAdminController {
 
     return this.systemAdminService.rejectKyc(kycId, request.user.sub, dto);
   }
+
+  //suspend kyc
+  @Post('/:kycId/suspend')
+  suspendKyc(
+    @Param('kycId') kycId: string,
+    @Req() request: AuthenticationRequest,
+  ) {
+    console.log('The kyc id => ', kycId);
+    console.log('the req.user =>', request.user.sub);
+    console.log('the request roles =>', request.user.roles);
+
+    return this.systemAdminService.suspendKyc(kycId, request.user.sub);
+  }
+
+  //reactive kyc
+  @Post('/:kycId/reactive')
+  reactiveKyc(
+    @Param('kycId') kycId: string,
+    @Req() request: AuthenticationRequest,
+  ) {
+    console.log('The kyc-id =>', kycId);
+    console.log('the request user =>', request.user.sub);
+    console.log('the request user roles =>', request.user.roles);
+
+    return this.systemAdminService.reactiveKyc(kycId, request.user.sub);
+  }
 }

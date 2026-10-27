@@ -324,7 +324,7 @@ export class SystemAdminService {
       await tx.kycDocument.updateMany({
         where: { instituteId },
         data: {
-          status: KycDocumentStatus.REJECTED,
+          status: KycDocumentStatus.SUSPENDED,
           reviewedById: systemAdminId,
           reviewAt: new Date(),
         },
@@ -333,7 +333,7 @@ export class SystemAdminService {
       await tx.institute.update({
         where: { id: instituteId },
         data: {
-          status: 'REJECTED',
+          status: 'SUSPENDED',
           isApproved: false,
           isPublished: false,
         },
@@ -344,6 +344,58 @@ export class SystemAdminService {
       message: 'Institute and kyc suspend successfully',
       instituteId,
       status: 'SUSPENDED',
+      performedBy: systemAdminId,
+    };
+  }
+
+  //7.reactive a suspend institute
+  async reactiveKyc(kycId: string, systemAdminId: string) {
+    console.log('the kyc-id =>', kycId);
+    console.log('the system-admin id =>', systemAdminId);
+
+    const { instituteId } = await this.getSubmission(kycId);
+    console.log('The institute-id', instituteId);
+
+    const institute = await this.prismaService.institute.findUnique({
+      where: { id: instituteId },
+    });
+
+    console.log('The institute details are =>', instituteId);
+
+    if (!instituteId) {
+      throw new NotFoundException('Institute not found');
+    }
+
+    if (institute?.status !== 'SUSPENDED') {
+      throw new BadRequestException(
+        'Only the suspend institute can be reactive institute',
+      );
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.kycDocument.updateMany({
+        where: { instituteId },
+        data: {
+          status: KycDocumentStatus.APPROVED,
+          reviewedById: systemAdminId,
+          reviewAt: new Date(),
+        },
+      });
+
+      await tx.institute.update({
+        where: { id: instituteId },
+        data: {
+          status: 'APPROVED',
+          isApproved: true,
+          isPublished: true,
+        },
+      });
+    });
+
+    return {
+      message: 'Institute reactive successfully',
+      instituteId,
+      status: 'APPROVED',
       performedBy: systemAdminId,
     };
   }
