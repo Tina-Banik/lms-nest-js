@@ -23,7 +23,7 @@ export class SystemAdminGuard implements CanActivate {
     const roles = user.roles ?? [];
     console.log('the roles =>', roles);
 
-    if (!roles.includes('SYSTEM_ADMIN')) {
+    if (!roles.includes('PLATFORM_ADMIN')) {
       throw new ForbiddenException('Only SYSTEM_ADMIN can perform this action');
     }
     

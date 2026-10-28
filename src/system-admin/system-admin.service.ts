@@ -136,6 +136,65 @@ export class SystemAdminService {
     };
   }
 
+  //lists all the lyc lists
+  async listsKyc(
+    systemAdminId: string,
+    status?: KycDocumentStatus,
+    instituteId?: string,
+  ) {
+    console.log('The system-admin id =>', systemAdminId);
+
+    const document = await this.prismaService.kycDocument.findMany({
+      where: {
+        ...(status ? { status } : {}),
+        ...(instituteId ? { instituteId } : {}),
+      },
+      include: {
+        institute: true,
+        uploadedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return {
+      message: 'KYC documents fetched successfully',
+      total: document.length,
+      data: document,
+    };
+  }
+
+  //find the kyc by id
+  async getKycById(kycId: string, systemAdminId?: string) {
+    const document = await this.prismaService.kycDocument.findUnique({
+      where: { id: kycId },
+      include: {
+        institute: true,
+        uploadedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!document) {
+      throw new BadRequestException('Document not found');
+    }
+
+    return document;
+  }
+
   //2.start the kyc review
   async startReview(kycId: string, systemAdminId: string) {
     const { instituteId, documents } = await this.getSubmission(kycId);
