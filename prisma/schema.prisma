@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -22,41 +22,42 @@ model User {
   id String @id @default(uuid())
 
   firstName String
-  lastName String
+  lastName  String
 
-  email String @unique
-  phone String @unique
+  email    String @unique
+  phone    String @unique
   password String
 
   address String?
-  city String?
-  state String?
+  city    String?
+  state   String?
   pincode String?
 
   isActive Boolean @default(true)
 
-  lastLogin DateTime?
+  lastLogin   DateTime?
   lastLoginIP String?
 
-  isEmailVerified Boolean @default(false)
+  isEmailVerified      Boolean   @default(false)
   emailVerifyTokenHash String?
   emailVerifyExpiresAt DateTime?
 
   instituteId String?
-  institute Institute? @relation(fields:[instituteId], references:[id], onDelete:SetNull)
+  institute   Institute? @relation(fields: [instituteId], references: [id], onDelete: SetNull)
 
-  userRoles UserRoleAssignment[]
-  sessions Session[]
+  userRoles          UserRoleAssignment[]
+  sessions           Session[]
   passwordResetToken PasswordResetToken[]
   verificationTokens VerificationToken[]
 
   KycDocuments KycDocument[]
 
+  coursesCreated Course[] @relation("CourseCreatedBy")
+
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@index([instituteId])
-  
   @@map("users")
 }
 
@@ -64,7 +65,7 @@ model Session {
   id String @id @default(uuid())
 
   userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   token String @unique
 
@@ -75,22 +76,20 @@ model Session {
   createdAt DateTime @default(now())
 
   @@index([userId])
-
   @@map("sessions")
-
 }
 
 model PasswordResetToken {
   id String @id @default(uuid())
 
   userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tokenHash String @unique
 
   expiresAt DateTime
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@index([userId])
   @@map("password_reset_token")
@@ -100,34 +99,34 @@ model VerificationToken {
   id String @id @default(uuid())
 
   userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tokenHash String @unique
 
   expiresAt DateTime
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@index([userId])
-
   @@map("verification_token")
 }
+
 // ─────────────────────────────────────────
 // RBAC
 // ─────────────────────────────────────────
 model Role {
   id String @id @default(uuid())
 
-  name String @unique
+  name        String  @unique
   description String?
 
-  userRoles UserRoleAssignment[]
+  userRoles      UserRoleAssignment[]
   rolePermission RolePermissionAssignment[]
 
   isSystem Boolean @default(false)
 
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@map("roles")
 }
@@ -135,14 +134,14 @@ model Role {
 model Permission {
   id String @id @default(uuid())
 
-  name String @unique
-  module String
+  name        String  @unique
+  module      String
   description String?
 
   rolePermission RolePermissionAssignment[]
 
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@map("permissions")
 }
@@ -151,15 +150,14 @@ model UserRoleAssignment {
   id String @id @default(uuid())
 
   userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   roleId String
-  role Role @relation(fields:[roleId], references:[id], onDelete:Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-  @@unique([userId,roleId])
-
+  @@unique([userId, roleId])
   @@map("user_roles")
 }
 
@@ -167,15 +165,14 @@ model RolePermissionAssignment {
   id String @id @default(uuid())
 
   roleId String
-  role Role @relation(fields:[roleId], references:[id], onDelete:Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   permissionId String
-  permission Permission @relation(fields:[permissionId], references:[id], onDelete:Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-  @@unique([roleId,permissionId])
-
+  @@unique([roleId, permissionId])
   @@map("role_permission")
 }
 
@@ -204,17 +201,18 @@ model Institute {
   instituteType InstituteType
 
   address String?
-  city String?
-  state String?
+  city    String?
+  state   String?
   pincode String?
 
   status InstituteStatus @default(PENDING)
 
-  isApproved Boolean @default(false)
+  isApproved  Boolean @default(false)
   isPublished Boolean @default(false)
 
-  user User[]
+  user         User[]
   KycDocuments KycDocument[]
+  courses      Course[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -247,28 +245,80 @@ model KycDocument {
   id String @id @default(uuid())
 
   instituteId String
-  institute Institute @relation(fields:[instituteId], references:[id], onDelete:Cascade)
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
 
   uploadedById String
-  uploadedBy User @relation(fields:[uploadedById], references:[id])
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
 
   documentType KycDocumentType
 
   fileName String
-  fileUrl String
+  fileUrl  String
   fileType String
-  
+
   status KycDocumentStatus @default(PENDING)
 
   rejectionReason String?
 
   reviewedById String?
-  reviewAt DateTime?
+  reviewAt     DateTime?
 
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@index([instituteId])
   @@index([status])
   @@map("kyc_documents")
+}
+
+// ─────────────────────────────────────────
+// Course Management
+// ─────────────────────────────────────────
+enum CourseType {
+  SELF_PACED
+  SCHEDULED
+  BATCH
+}
+
+enum CourseDurationUnit {
+  HOURS
+  DAYS
+  WEEKS
+  MONTHS
+}
+
+enum CoursePaymentType {
+  ONE_TIME
+  SUBSCRIPTION
+  INSTALLMENT
+}
+
+model Course {
+  id String @id @default(uuid())
+
+  instituteId String
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("CourseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  name           String
+  duration       String
+  type           CourseType
+  fee            Decimal            @db.Decimal(10, 2)
+  currency       String
+  thumbnailUrl   String?
+  instructorName String?
+  paymentType    CoursePaymentType?
+  paymentGateWay String?
+  description    String?
+  isPublished    Boolean            @default(true)
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  @@index([instituteId])
+  @@index([instituteId, isPublished])
+  @@index([createdAt])
+  @@map("courses")
 }
