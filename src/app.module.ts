@@ -11,6 +11,7 @@ import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
 import { KycModule } from './kyc/kyc.module';
 import { SystemAdminModule } from './system-admin/system-admin.module';
+import { CoursesModule } from './courses/courses.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { SystemAdminModule } from './system-admin/system-admin.module';
     MailModule,
     KycModule,
     SystemAdminModule,
+    CoursesModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, MailService],
