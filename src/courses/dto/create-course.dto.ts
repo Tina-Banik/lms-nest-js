@@ -1,5 +1,6 @@
 import { CoursePaymentType, CourseType } from '@prisma/client';
 import {
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -49,4 +50,18 @@ export class CreateCourseDto {
   @IsOptional()
   @IsEnum(CoursePaymentType)
   paymentType?: CoursePaymentType;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  paymentGateway?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
 }
