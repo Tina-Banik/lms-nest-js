@@ -37,6 +37,16 @@ export class CoursesService {
       },
     });
 
+    if (
+      !institute ||
+      !institute.isApproved ||
+      institute.status !== 'APPROVED'
+    ) {
+      throw new BadRequestException(
+        'Your institute must be approved before managing the courses',
+      );
+    }
+    
     return institute;
   }
 }
