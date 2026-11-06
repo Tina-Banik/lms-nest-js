@@ -82,4 +82,27 @@ export class CoursesService {
   }
 
   //lists courses
+
+  //get my courses
+  async getMine(userId: string, courseId: string) {
+    console.log('the user id =>', userId);
+    console.log('The course id =>', courseId);
+
+    const institute = await this.getApprovedInstitute(userId);
+
+    console.log('the institute =>', institute);
+
+    const course = await this.prismaService.course.findFirst({
+      where: {
+        id: courseId,
+        instituteId: institute.id,
+      },
+    });
+
+    if (!institute) {
+      throw new BadRequestException('Course not found');
+    }
+
+    return course;
+  }
 }
