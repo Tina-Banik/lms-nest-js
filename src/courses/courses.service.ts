@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { ListCourseDto } from './dto/list-courses.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CoursesService {
@@ -82,7 +84,50 @@ export class CoursesService {
   }
 
   //lists courses
+  async listMine(userId: string, query: ListCourseDto) {
+    console.log('the user id =>', userId);
+    const institute = await this.getApprovedInstitute(userId);
+    console.log('the institute details =>', institute);
 
+    const page = Number(query.page) ?? 1;
+    const limit = Number(query.limit) ?? 10;
+
+    const where: Prisma.CourseWhereInput = {
+      instituteId: institute.id,
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.isPublished !== undefined
+        ? { isPublished: query.isPublished }
+        : {}),
+      ...(query.search
+        ? {
+            name: {
+              contains: query.search.trim(),
+              mode: 'insensitive',
+            },
+          }
+        : {}),
+    };
+
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.course.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prismaService.course.count({ where }),
+    ]);
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
   //get my courses
   async getMine(userId: string, courseId: string) {
     console.log('the user id =>', userId);

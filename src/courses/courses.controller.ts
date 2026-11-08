@@ -6,12 +6,14 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { ListCourseDto } from './dto/list-courses.dto';
 
 interface AuthUser {
   id: string;
@@ -43,6 +45,14 @@ export class CoursesController {
     console.log('the create course =>', createCourse);
 
     return createCourse;
+  }
+
+  @Get()
+  list(@Req() req: AuthenticatedRequest, @Query() query: ListCourseDto) {
+    const data = this.courseService.listMine(this.getAdminId(req), query);
+    console.log('the course lists =>', data);
+
+    return data;
   }
 
   @Get('/:courseId')
