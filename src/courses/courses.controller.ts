@@ -2,6 +2,9 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
+  Param,
+  ParseUUIDPipe,
   Post,
   Req,
   UseGuards,
@@ -40,5 +43,16 @@ export class CoursesController {
     console.log('the create course =>', createCourse);
 
     return createCourse;
+  }
+
+  @Get('/:courseId')
+  getOne(
+    @Req() req: AuthenticatedRequest,
+    @Param('courseId', ParseUUIDPipe) courseId: string,
+  ) {
+    const result = this.courseService.getMine(this.getAdminId(req), courseId);
+    console.log('the create course =>', result);
+
+    return result;
   }
 }
