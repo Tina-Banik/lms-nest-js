@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -14,6 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { ListCourseDto } from './dto/list-courses.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 interface AuthUser {
   id: string;
@@ -62,6 +64,23 @@ export class CoursesController {
   ) {
     const result = this.courseService.getMine(this.getAdminId(req), courseId);
     console.log('the create course =>', result);
+
+    return result;
+  }
+
+  //update the course
+  @Patch('/:courseId')
+  updateOne(
+    @Req() req: AuthenticatedRequest,
+    @Param('courseId', ParseUUIDPipe) courseId: string,
+    @Body() dto: UpdateCourseDto,
+  ) {
+    const result = this.courseService.update(
+      this.getAdminId(req),
+      courseId,
+      dto,
+    );
+    console.log('the updated course =>', result);
 
     return result;
   }

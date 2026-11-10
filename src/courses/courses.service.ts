@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { ListCourseDto } from './dto/list-courses.dto';
 import { Prisma } from '@prisma/client';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Injectable()
 export class CoursesService {
@@ -149,5 +150,49 @@ export class CoursesService {
     }
 
     return course;
+  }
+
+  //update the course
+  async update(userId: string, courseId: string, dto: UpdateCourseDto) {
+    console.log('The admin user-id =>', userId);
+    console.log('the course id =>', courseId);
+
+    const institute = await this.getApprovedInstitute(userId);
+    console.log('the institute details =>', institute);
+
+    await this.getMine(userId, courseId);
+
+    return this.prismaService.course.update({
+      where: { id: courseId },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
+        ...(dto.duration !== undefined
+          ? { duration: dto.duration.trim() }
+          : {}),
+        ...(dto.type !== undefined ? { type: dto.type } : {}),
+        ...(dto.fee !== undefined ? { fee: dto.fee } : {}),
+        ...(dto.currency !== undefined
+          ? { currency: dto.currency.trim().toUpperCase() }
+          : {}),
+        ...(dto.thumbnailUrl !== undefined
+          ? { thumbnailUrl: dto.thumbnailUrl }
+          : {}),
+        ...(dto.instructorName !== undefined
+          ? { instructorName: dto.instructorName }
+          : {}),
+        ...(dto.paymentType !== undefined
+          ? { paymentType: dto.paymentType }
+          : {}),
+        ...(dto.paymentGateway !== undefined
+          ? { paymentGateway: dto.paymentGateway }
+          : {}),
+        ...(dto.description !== undefined
+          ? { description: dto.description }
+          : {}),
+        ...(dto.isPublished !== undefined
+          ? { isPublished: dto.isPublished }
+          : {}),
+      },
+    });
   }
 }

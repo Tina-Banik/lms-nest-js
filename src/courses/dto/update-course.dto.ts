@@ -12,7 +12,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class UpdateClassDto {
+export class UpdateCourseDto {
   @IsOptional()
   @IsString()
   @MinLength(2)
@@ -43,7 +43,7 @@ export class UpdateClassDto {
 
   @IsOptional()
   @IsUrl({ require_protocol: true })
-  thumbnail?: string;
+  thumbnailUrl?: string;
 
   @IsOptional()
   @IsString()
