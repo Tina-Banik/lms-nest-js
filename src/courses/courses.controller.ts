@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -83,5 +84,16 @@ export class CoursesController {
     console.log('the updated course =>', result);
 
     return result;
+  }
+
+  //remove the course
+  @Delete('/:courseId')
+  remove(
+    @Req() req: AuthenticatedRequest,
+    @Param('courseId', ParseUUIDPipe) courseId: string,
+  ) {
+    const data = this.courseService.remove(this.getAdminId(req), courseId);
+
+    return data;
   }
 }

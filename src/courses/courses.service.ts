@@ -195,4 +195,22 @@ export class CoursesService {
       },
     });
   }
+
+  //delete/remove the course
+  async remove(userId: string, courseId: string) {
+    console.log('the course id => ', courseId);
+    console.log('The user id =>', userId);
+
+    await this.getApprovedInstitute(userId);
+    await this.getMine(userId, courseId);
+
+    await this.prismaService.course.delete({
+      where: { id: courseId },
+    });
+
+    return {
+      message: 'course is deleted successfully',
+      courseId,
+    };
+  }
 }
