@@ -213,4 +213,72 @@ export class CoursesService {
       courseId,
     };
   }
+
+  //lists of published course
+  async listPublished(instituteId: string, query: ListCourseDto) {
+    console.log('the institute-id =>', instituteId);
+
+    const institute = await this.prismaService.institute.findFirst({
+      where: {
+        id: instituteId,
+        status: 'APPROVED',
+        isApproved: true,
+        isPublished: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!institute) {
+      throw new BadRequestException('Published institute catalog not found');
+    }
+
+    const page = Number(query.page) ?? 1;
+    const limit = Number(query.limit) ?? 10;
+
+    const where: Prisma.CourseWhereInput = {
+      instituteId,
+      isPublished: true,
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.search
+        ? { name: { contains: query.search.trim(), mode: 'insensitive' } }
+        : {}),
+    };
+
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.course.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          instituteId: true,
+          name: true,
+          duration: true,
+          type: true,
+          fee: true,
+          thumbnailUrl: true,
+          currency: true,
+          instructorName: true,
+          paymentType: true,
+          description: true,
+          createdAt: true,
+        },
+      }),
+
+      this.prismaService.course.count({ where }),
+    ]);
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }
