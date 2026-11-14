@@ -12,12 +12,21 @@ import { MailModule } from './mail/mail.module';
 import { KycModule } from './kyc/kyc.module';
 import { SystemAdminModule } from './system-admin/system-admin.module';
 import { CoursesModule } from './courses/courses.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     AuthModule,
     UserModule,
     PrismaModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60_000,
+          limit: 100,
+        },
+      ],
+    }),
     ConfigModule.forRoot({ isGlobal: true }),
     LoggerModule.forRoot({
       pinoHttp: {

@@ -16,17 +16,20 @@ import { PasswordRequestResetDto } from './dto/password-request-reset.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { PasswordResetConfirmDto } from './dto/password-reset-conform.dto';
 import { ResendVerifyEmailDto } from './dto/resend-email-verification.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('/api/v1/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
     const result = this.authService.registerUser(registerDto);
     return result;
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   //login
   @Post('login')
   login(@Body() loginDto: LoginDto, @Req() request: any) {
@@ -83,5 +86,4 @@ export class AuthController {
       resetPasswordConfirmDto.newPassword,
     );
   }
-  
 }
